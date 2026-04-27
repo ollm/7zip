@@ -37,7 +37,7 @@ jobs:
 
       - name: Build
         working-directory: CPP/7zip/Bundles/Alone2
-        run: make -f ../../cmpl_gcc_x64.mak COMPL_STATIC=1 -j$(nproc)
+        run: make -f ../../cmpl_gcc_x64.mak COMPL_STATIC=1 USE_ASM= -j$(nproc)
 
       - name: Package
         run: |
@@ -70,7 +70,7 @@ jobs:
 
       - name: Build
         working-directory: CPP/7zip/Bundles/Alone2
-        run: make -f ../../cmpl_gcc_x86.mak COMPL_STATIC=1 -j$(nproc)
+        run: make -f ../../cmpl_gcc_x86.mak COMPL_STATIC=1 USE_ASM= -j$(nproc)
 
       - name: Package
         run: |
