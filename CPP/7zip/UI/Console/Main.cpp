@@ -187,6 +187,7 @@ static const char * const kHelpString =
     "  -sni : store NT security information\n"
     "  -sns[-] : store NTFS alternate streams\n"
     "  -so : write data to stdout\n"
+    "  -snf{format} : print filename header to stdout before each file (use {name} as placeholder)\n"
     "  -spd : disable wildcard matching for file names\n"
     "  -spe : eliminate duplication of root folder for extract command\n"
     "  -spf[2] : use fully qualified file paths\n"
@@ -1362,6 +1363,9 @@ int Main2(
       eo.YesToAll = options.YesToAll;
       eo.TestMode = options.Command.IsTestCommand();
       eo.StdOutByteLimit = options.StdOutByteLimit;
+      eo.StdOutSeparatorEnabled = options.StdOutSeparatorEnabled;
+      eo.StdOutSeparatorPrefix = options.StdOutSeparatorPrefix;
+      eo.StdOutSeparatorSuffix = options.StdOutSeparatorSuffix;
       
       #ifndef Z7_SFX
       eo.Properties = options.Properties;

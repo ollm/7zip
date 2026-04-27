@@ -304,7 +304,8 @@ CArchiveExtractCallback::CArchiveExtractCallback():
     Is_elimPrefix_Mode(false),
     ByteLimitWasReached(false),
     _arc(NULL),
-    _multiArchives(false)
+    _multiArchives(false),
+    StdOutSeparatorEnabled(false)
 {
   #ifdef Z7_USE_SECURITY_CODE
   _saclEnabled = InitLocalPrivileges();
@@ -1878,6 +1879,19 @@ Z7_COM7F_IMF(CArchiveExtractCallback::GetStream(UInt32 index, ISequentialOutStre
   {
     if (_stdOutMode)
     {
+      if (StdOutSeparatorEnabled)
+      {
+        const UString fileName = MakePathFromParts(_item.PathParts);
+        AString separatorUtf8;
+        ConvertUnicodeToUTF8(StdOutSeparatorPrefix + fileName + StdOutSeparatorSuffix, separatorUtf8);
+        const UInt32 sepLen = (UInt32)separatorUtf8.Len();
+        if (sepLen > 0)
+        {
+          CMyComPtr<ISequentialOutStream> separatorStream = new CStdOutFileStream;
+          UInt32 written = 0;
+          separatorStream->Write(separatorUtf8.Ptr(), sepLen, &written);
+        }
+      }
       CMyComPtr<ISequentialOutStream> stdOut = new CStdOutFileStream;
       if (_stdOutByteLimit != k_StdOutByteLimit_Unlimited)
       {

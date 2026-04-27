@@ -206,7 +206,9 @@ enum Enum
   kNameTrailReplace,
 
   kDeleteAfterCompressing,
-  kSetArcMTime
+  kSetArcMTime,
+
+  kStdOutNameFormat
 
   #ifndef Z7_NO_CRYPTO
   , kPassword
@@ -358,7 +360,9 @@ static const CSwitchForm kSwitchForms[] =
   { "snt", SWFRM_MINUS },
   
   { "sdel", SWFRM_SIMPLE },
-  { "stl", SWFRM_SIMPLE }
+  { "stl", SWFRM_SIMPLE },
+
+  { "snf", SWFRM_STRING_SINGL(0) }
 
   #ifndef Z7_NO_CRYPTO
   , { "p", SWFRM_STRING }
@@ -1360,6 +1364,22 @@ void CArcCmdLineParser::Parse2(CArcCmdLineOptions &options)
     const UString &s = parser[NKey::kStdOutByteLimit].PostStrings[0];
     if (!ParseSizeString(s, options.StdOutByteLimit))
       throw CArcCmdLineException("Unsupported -slb:", s);
+  }
+
+  if (parser[NKey::kStdOutNameFormat].ThereIs)
+  {
+    const UString &s = parser[NKey::kStdOutNameFormat].PostStrings[0];
+    const int namePos = s.Find(L"{name}");
+    if (namePos < 0)
+    {
+      options.StdOutSeparatorPrefix = s;
+    }
+    else
+    {
+      options.StdOutSeparatorPrefix = s.Left((unsigned)namePos);
+      options.StdOutSeparatorSuffix = s.Ptr((unsigned)namePos + 6);
+    }
+    options.StdOutSeparatorEnabled = true;
   }
   
   if (parser[NKey::kElimDup].ThereIs)

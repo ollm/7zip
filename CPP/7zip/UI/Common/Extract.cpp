@@ -201,6 +201,9 @@ static HRESULT DecompressArchive(
       options.StdOutByteLimit);
 
   ecs->Is_elimPrefix_Mode = elimIsPossible;
+  ecs->StdOutSeparatorEnabled = options.StdOutSeparatorEnabled;
+  ecs->StdOutSeparatorPrefix = options.StdOutSeparatorPrefix;
+  ecs->StdOutSeparatorSuffix = options.StdOutSeparatorSuffix;
 
   
   #ifdef SUPPORT_LINKS
