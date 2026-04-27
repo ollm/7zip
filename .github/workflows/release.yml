@@ -2,6 +2,11 @@ name: release
 
 on:
   workflow_dispatch:
+    inputs:
+      create_release:
+        type: boolean
+        default: true
+        description: 'Create GitHub release'
   workflow_call:
     inputs:
       create_release:
