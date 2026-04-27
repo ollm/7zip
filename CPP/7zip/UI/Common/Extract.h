@@ -70,7 +70,7 @@ struct CExtractOptions: public CExtractOptionsBase
       StdOutMode(false),
       YesToAll(false),
       TestMode(false),
-      StdOutByteLimit((UInt64)(Int64)-1)
+      StdOutByteLimit(k_StdOutByteLimit_Unlimited)
       {}
 };
 

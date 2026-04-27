@@ -151,7 +151,7 @@ struct CArcCmdLineOptions
 
       LogLevel(0),
 
-      StdOutByteLimit((UInt64)(Int64)-1)
+      StdOutByteLimit(k_StdOutByteLimit_Unlimited)
   {
     ListPathSeparatorSlash.Val =
 #ifdef _WIN32

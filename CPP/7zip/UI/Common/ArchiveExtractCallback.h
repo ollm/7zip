@@ -21,6 +21,8 @@
 
 #include "HashCalc.h"
 
+const UInt64 k_StdOutByteLimit_Unlimited = (UInt64)(Int64)-1;
+
 #ifndef Z7_SFX
 
 Z7_CLASS_IMP_NOQIB_1(
@@ -539,7 +541,7 @@ public:
       const FString &directoryPath,
       const UStringVector &removePathParts, bool removePartsForAltStreams,
       UInt64 packSize,
-      UInt64 stdOutByteLimit = (UInt64)(Int64)-1);
+      UInt64 stdOutByteLimit = k_StdOutByteLimit_Unlimited);
 
 
 #ifdef SUPPORT_LINKS

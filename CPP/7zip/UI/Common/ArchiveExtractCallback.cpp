@@ -300,7 +300,7 @@ CArchiveExtractCallback::CArchiveExtractCallback():
     // Write_CTime(true),
     // Write_ATime(true),
     // Write_MTime(true),
-    _stdOutByteLimit((UInt64)(Int64)-1),
+    _stdOutByteLimit(k_StdOutByteLimit_Unlimited),
     Is_elimPrefix_Mode(false),
     _arc(NULL),
     _multiArchives(false)
@@ -1845,7 +1845,7 @@ Z7_COM7F_IMF(CArchiveExtractCallback::GetStream(UInt32 index, ISequentialOutStre
     if (_stdOutMode)
     {
       CMyComPtr<ISequentialOutStream> stdOut = new CStdOutFileStream;
-      if (_stdOutByteLimit != (UInt64)(Int64)-1)
+      if (_stdOutByteLimit != k_StdOutByteLimit_Unlimited)
       {
         CLimitedSequentialOutStream *limitSpec = new CLimitedSequentialOutStream;
         CMyComPtr<ISequentialOutStream> limit(limitSpec);
