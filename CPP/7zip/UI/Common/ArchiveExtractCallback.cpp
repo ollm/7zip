@@ -1594,19 +1594,20 @@ HRESULT CArchiveExtractCallback::GetItem(UInt32 index)
 Z7_COM7F_IMF(CStdOutStreamWithByteLimit::Write(const void *data, UInt32 size, UInt32 *processedSize))
 {
   if (processedSize)
-    *processedSize = size;
+    *processedSize = 0;
   if (_rem == 0)
   {
     if (_limitReachedPtr)
       *_limitReachedPtr = true;
     return E_ABORT;
   }
-  UInt32 toWrite = (size > _rem) ? (UInt32)_rem : size;
+  // Clamp: when _rem < size it fits in UInt32 since _rem < size <= UINT32_MAX
+  const UInt32 toWrite = (_rem >= size) ? size : (UInt32)_rem;
   UInt32 written = 0;
   const HRESULT res = _stream->Write(data, toWrite, &written);
   _rem -= written;
   if (processedSize)
-    *processedSize = size; // tell decompressor all bytes were consumed
+    *processedSize = written;
   if (_rem == 0)
   {
     if (_limitReachedPtr)
