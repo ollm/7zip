@@ -1369,15 +1369,16 @@ void CArcCmdLineParser::Parse2(CArcCmdLineOptions &options)
   if (parser[NKey::kStdOutNameFormat].ThereIs)
   {
     const UString &s = parser[NKey::kStdOutNameFormat].PostStrings[0];
-    const int namePos = s.Find(L"{name}");
-    if (namePos < 0)
+    const int namePlaceholderPos = s.Find(L"{name}");
+    if (namePlaceholderPos < 0)
     {
       options.StdOutSeparatorPrefix = s;
     }
     else
     {
-      options.StdOutSeparatorPrefix = s.Left((unsigned)namePos);
-      options.StdOutSeparatorSuffix = s.Ptr((unsigned)namePos + 6);
+      const unsigned pos = (unsigned)namePlaceholderPos;
+      options.StdOutSeparatorPrefix = s.Left(pos);
+      options.StdOutSeparatorSuffix = s.Ptr(pos + 6);
     }
     options.StdOutSeparatorEnabled = true;
   }

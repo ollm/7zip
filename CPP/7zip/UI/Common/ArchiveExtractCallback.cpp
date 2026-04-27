@@ -1889,7 +1889,7 @@ Z7_COM7F_IMF(CArchiveExtractCallback::GetStream(UInt32 index, ISequentialOutStre
         {
           CMyComPtr<ISequentialOutStream> separatorStream = new CStdOutFileStream;
           UInt32 written = 0;
-          separatorStream->Write(separatorUtf8.Ptr(), sepLen, &written);
+          RINOK(separatorStream->Write(separatorUtf8.Ptr(), sepLen, &written))
         }
       }
       CMyComPtr<ISequentialOutStream> stdOut = new CStdOutFileStream;
