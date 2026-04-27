@@ -23,6 +23,22 @@
 
 const UInt64 k_StdOutByteLimit_Unlimited = (UInt64)(Int64)-1;
 
+Z7_CLASS_IMP_NOQIB_1(
+  CStdOutStreamWithByteLimit
+  , ISequentialOutStream
+)
+  CMyComPtr<ISequentialOutStream> _stream;
+  UInt64 _rem;
+  bool *_limitReachedPtr;
+public:
+  void Init(ISequentialOutStream *stream, UInt64 limit, bool *limitReachedPtr)
+  {
+    _stream = stream;
+    _rem = limit;
+    _limitReachedPtr = limitReachedPtr;
+  }
+};
+
 #ifndef Z7_SFX
 
 Z7_CLASS_IMP_NOQIB_1(
@@ -371,8 +387,10 @@ class CArchiveExtractCallback Z7_final:
   bool _testMode;
   bool _removePartsForAltStreams;
   UInt64 _stdOutByteLimit;
+  bool *_byteLimitReachedPtr;
 public:
   bool Is_elimPrefix_Mode;
+  bool ByteLimitWasReached;
 private:
 
   const CArc *_arc;

@@ -29,7 +29,6 @@
 #endif
 
 #include "../../Common/FilePathAutoRename.h"
-#include "../../Common/LimitedStreams.h"
 #include "../../Common/StreamUtils.h"
 
 #include "../../Archive/Common/ItemNameUtils.h"
@@ -301,7 +300,9 @@ CArchiveExtractCallback::CArchiveExtractCallback():
     // Write_ATime(true),
     // Write_MTime(true),
     _stdOutByteLimit(k_StdOutByteLimit_Unlimited),
+    _byteLimitReachedPtr(NULL),
     Is_elimPrefix_Mode(false),
+    ByteLimitWasReached(false),
     _arc(NULL),
     _multiArchives(false)
 {
@@ -347,6 +348,8 @@ void CArchiveExtractCallback::Init(
   _stdOutMode = stdOutMode;
   _testMode = testMode;
   _stdOutByteLimit = stdOutByteLimit;
+  _byteLimitReachedPtr = NULL;
+  ByteLimitWasReached = false;
   _packTotal = packSize;
   _progressTotal = packSize;
   // _progressTotal = 0;
@@ -1588,6 +1591,32 @@ HRESULT CArchiveExtractCallback::GetItem(UInt32 index)
 }
 
 
+Z7_COM7F_IMF(CStdOutStreamWithByteLimit::Write(const void *data, UInt32 size, UInt32 *processedSize))
+{
+  if (processedSize)
+    *processedSize = size;
+  if (_rem == 0)
+  {
+    if (_limitReachedPtr)
+      *_limitReachedPtr = true;
+    return E_ABORT;
+  }
+  UInt32 toWrite = (size > _rem) ? (UInt32)_rem : size;
+  UInt32 written = 0;
+  const HRESULT res = _stream->Write(data, toWrite, &written);
+  _rem -= written;
+  if (processedSize)
+    *processedSize = size; // tell decompressor all bytes were consumed
+  if (_rem == 0)
+  {
+    if (_limitReachedPtr)
+      *_limitReachedPtr = true;
+    return E_ABORT;
+  }
+  return res;
+}
+
+
 Z7_COM7F_IMF(CArchiveExtractCallback::GetStream(UInt32 index, ISequentialOutStream **outStream, Int32 askExtractMode))
 {
   COM_TRY_BEGIN
@@ -1847,10 +1876,9 @@ Z7_COM7F_IMF(CArchiveExtractCallback::GetStream(UInt32 index, ISequentialOutStre
       CMyComPtr<ISequentialOutStream> stdOut = new CStdOutFileStream;
       if (_stdOutByteLimit != k_StdOutByteLimit_Unlimited)
       {
-        CLimitedSequentialOutStream *limitSpec = new CLimitedSequentialOutStream;
+        CStdOutStreamWithByteLimit *limitSpec = new CStdOutStreamWithByteLimit;
         CMyComPtr<ISequentialOutStream> limit(limitSpec);
-        limitSpec->SetStream(stdOut);
-        limitSpec->Init(_stdOutByteLimit, true);
+        limitSpec->Init(stdOut, _stdOutByteLimit, &ByteLimitWasReached);
         outStreamLoc = limit;
       }
       else
@@ -2691,6 +2719,10 @@ Z7_COM7F_IMF(CArchiveExtractCallback::SetOperationResult(Int32 opRes))
   COM_TRY_BEGIN
 
   // printf("\nCArchiveExtractCallback::SetOperationResult: %d %s\n", opRes, GetAnsiString(_diskFilePath));
+
+  // If the byte limit was reached, treat the truncated extraction as success
+  if (ByteLimitWasReached && opRes != NArchive::NExtract::NOperationResult::kOK)
+    opRes = NArchive::NExtract::NOperationResult::kOK;
 
   #ifndef Z7_SFX
   if (ExtractToStreamCallback)

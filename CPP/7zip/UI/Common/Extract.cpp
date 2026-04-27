@@ -240,6 +240,11 @@ static HRESULT DecompressArchive(
   if (result == S_OK)
     result = res2;
 
+  // If extraction was aborted because the stdout byte limit was reached,
+  // treat it as success (the caller asked for early termination).
+  if (result == E_ABORT && ecs->ByteLimitWasReached)
+    result = S_OK;
+
   return callback->ExtractResult(result);
 }
 
