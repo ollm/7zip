@@ -1597,23 +1597,26 @@ Z7_COM7F_IMF(CStdOutStreamWithByteLimit::Write(const void *data, UInt32 size, UI
     *processedSize = 0;
   if (_rem == 0)
   {
+    // Limit already reached: act as a null sink so extraction continues for remaining files
     if (_limitReachedPtr)
       *_limitReachedPtr = true;
-    return E_ABORT;
+    if (processedSize)
+      *processedSize = size;
+    return S_OK;
   }
   // Clamp: when _rem < size it fits in UInt32 since _rem < size <= UINT32_MAX
   const UInt32 toWrite = (_rem >= size) ? size : (UInt32)_rem;
   UInt32 written = 0;
   const HRESULT res = _stream->Write(data, toWrite, &written);
   _rem -= written;
-  if (processedSize)
-    *processedSize = written;
   if (_rem == 0)
   {
     if (_limitReachedPtr)
       *_limitReachedPtr = true;
-    return E_ABORT;
   }
+  // Report all bytes as processed (remaining bytes beyond the limit are discarded)
+  if (processedSize)
+    *processedSize = size;
   return res;
 }
 
@@ -1651,6 +1654,7 @@ Z7_COM7F_IMF(CArchiveExtractCallback::GetStream(UInt32 index, ISequentialOutStre
   _curSize = 0;
   _fileLength_that_WasSet = 0;
   _index = index;
+  ByteLimitWasReached = false;
 
 #if defined(_WIN32) && !defined(UNDER_CE)
   _altStream_NeedRestore_AttribVal = 0;
