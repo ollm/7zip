@@ -368,6 +368,7 @@ class CArchiveExtractCallback Z7_final:
   bool _stdOutMode;
   bool _testMode;
   bool _removePartsForAltStreams;
+  UInt64 _stdOutByteLimit;
 public:
   bool Is_elimPrefix_Mode;
 private:
@@ -537,7 +538,8 @@ public:
       bool stdOutMode, bool testMode,
       const FString &directoryPath,
       const UStringVector &removePathParts, bool removePartsForAltStreams,
-      UInt64 packSize);
+      UInt64 packSize,
+      UInt64 stdOutByteLimit = (UInt64)(Int64)-1);
 
 
 #ifdef SUPPORT_LINKS

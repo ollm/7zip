@@ -197,7 +197,8 @@ static HRESULT DecompressArchive(
       options.StdOutMode, options.TestMode,
       outDir,
       removePathParts, false,
-      packSize);
+      packSize,
+      options.StdOutByteLimit);
 
   ecs->Is_elimPrefix_Mode = elimIsPossible;
 

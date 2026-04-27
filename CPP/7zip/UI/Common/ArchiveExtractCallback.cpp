@@ -29,6 +29,7 @@
 #endif
 
 #include "../../Common/FilePathAutoRename.h"
+#include "../../Common/LimitedStreams.h"
 #include "../../Common/StreamUtils.h"
 
 #include "../../Archive/Common/ItemNameUtils.h"
@@ -299,6 +300,7 @@ CArchiveExtractCallback::CArchiveExtractCallback():
     // Write_CTime(true),
     // Write_ATime(true),
     // Write_MTime(true),
+    _stdOutByteLimit((UInt64)(Int64)-1),
     Is_elimPrefix_Mode(false),
     _arc(NULL),
     _multiArchives(false)
@@ -324,7 +326,8 @@ void CArchiveExtractCallback::Init(
     bool stdOutMode, bool testMode,
     const FString &directoryPath,
     const UStringVector &removePathParts, bool removePartsForAltStreams,
-    UInt64 packSize)
+    UInt64 packSize,
+    UInt64 stdOutByteLimit)
 {
   ClearExtractedDirsInfo();
   _outFileStream.Release();
@@ -343,6 +346,7 @@ void CArchiveExtractCallback::Init(
   _wildcardCensor = wildcardCensor;
   _stdOutMode = stdOutMode;
   _testMode = testMode;
+  _stdOutByteLimit = stdOutByteLimit;
   _packTotal = packSize;
   _progressTotal = packSize;
   // _progressTotal = 0;
@@ -1839,7 +1843,19 @@ Z7_COM7F_IMF(CArchiveExtractCallback::GetStream(UInt32 index, ISequentialOutStre
   if (askExtractMode == NArchive::NExtract::NAskMode::kExtract && !_testMode)
   {
     if (_stdOutMode)
-      outStreamLoc = new CStdOutFileStream;
+    {
+      CMyComPtr<ISequentialOutStream> stdOut = new CStdOutFileStream;
+      if (_stdOutByteLimit != (UInt64)(Int64)-1)
+      {
+        CLimitedSequentialOutStream *limitSpec = new CLimitedSequentialOutStream;
+        CMyComPtr<ISequentialOutStream> limit(limitSpec);
+        limitSpec->SetStream(stdOut);
+        limitSpec->Init(_stdOutByteLimit, true);
+        outStreamLoc = limit;
+      }
+      else
+        outStreamLoc = stdOut;
+    }
     else
     {
       bool needExit = true;
