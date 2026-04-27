@@ -1361,6 +1361,7 @@ int Main2(
       eo.StdOutMode = options.StdOutMode;
       eo.YesToAll = options.YesToAll;
       eo.TestMode = options.Command.IsTestCommand();
+      eo.StdOutByteLimit = options.StdOutByteLimit;
       
       #ifndef Z7_SFX
       eo.Properties = options.Properties;

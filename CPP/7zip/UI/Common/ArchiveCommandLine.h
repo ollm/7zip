@@ -120,6 +120,8 @@ struct CArcCmdLineOptions
   UInt32 NumIterations;
   bool NumIterations_Defined;
 
+  UInt64 StdOutByteLimit;
+
   CArcCmdLineOptions():
       HelpMode(false),
       // LargePages(false),
@@ -147,7 +149,9 @@ struct CArcCmdLineOptions
       Number_for_Errors(k_OutStream_stderr),
       Number_for_Percents(k_OutStream_stdout),
 
-      LogLevel(0)
+      LogLevel(0),
+
+      StdOutByteLimit(k_StdOutByteLimit_Unlimited)
   {
     ListPathSeparatorSlash.Val =
 #ifdef _WIN32

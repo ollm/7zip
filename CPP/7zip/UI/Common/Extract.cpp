@@ -197,7 +197,8 @@ static HRESULT DecompressArchive(
       options.StdOutMode, options.TestMode,
       outDir,
       removePathParts, false,
-      packSize);
+      packSize,
+      options.StdOutByteLimit);
 
   ecs->Is_elimPrefix_Mode = elimIsPossible;
 
@@ -238,6 +239,11 @@ static HRESULT DecompressArchive(
   const HRESULT res2 = ecsCloser.Close();
   if (result == S_OK)
     result = res2;
+
+  // If extraction was aborted because the stdout byte limit was reached,
+  // treat it as success (the caller asked for early termination).
+  if (result == E_ABORT && ecs->ByteLimitWasReached)
+    result = S_OK;
 
   return callback->ExtractResult(result);
 }

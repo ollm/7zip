@@ -50,6 +50,8 @@ struct CExtractOptions: public CExtractOptionsBase
   bool YesToAll;
   bool TestMode;
   
+  UInt64 StdOutByteLimit;
+
   // bool ShowDialog;
   // bool PasswordEnabled;
   // UString Password;
@@ -67,7 +69,8 @@ struct CExtractOptions: public CExtractOptionsBase
       StdInMode(false),
       StdOutMode(false),
       YesToAll(false),
-      TestMode(false)
+      TestMode(false),
+      StdOutByteLimit(k_StdOutByteLimit_Unlimited)
       {}
 };
 

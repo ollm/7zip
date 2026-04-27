@@ -299,7 +299,10 @@ CArchiveExtractCallback::CArchiveExtractCallback():
     // Write_CTime(true),
     // Write_ATime(true),
     // Write_MTime(true),
+    _stdOutByteLimit(k_StdOutByteLimit_Unlimited),
+    _byteLimitReachedPtr(NULL),
     Is_elimPrefix_Mode(false),
+    ByteLimitWasReached(false),
     _arc(NULL),
     _multiArchives(false)
 {
@@ -324,7 +327,8 @@ void CArchiveExtractCallback::Init(
     bool stdOutMode, bool testMode,
     const FString &directoryPath,
     const UStringVector &removePathParts, bool removePartsForAltStreams,
-    UInt64 packSize)
+    UInt64 packSize,
+    UInt64 stdOutByteLimit)
 {
   ClearExtractedDirsInfo();
   _outFileStream.Release();
@@ -343,6 +347,9 @@ void CArchiveExtractCallback::Init(
   _wildcardCensor = wildcardCensor;
   _stdOutMode = stdOutMode;
   _testMode = testMode;
+  _stdOutByteLimit = stdOutByteLimit;
+  _byteLimitReachedPtr = NULL;
+  ByteLimitWasReached = false;
   _packTotal = packSize;
   _progressTotal = packSize;
   // _progressTotal = 0;
@@ -1584,6 +1591,33 @@ HRESULT CArchiveExtractCallback::GetItem(UInt32 index)
 }
 
 
+Z7_COM7F_IMF(CStdOutStreamWithByteLimit::Write(const void *data, UInt32 size, UInt32 *processedSize))
+{
+  if (processedSize)
+    *processedSize = 0;
+  if (_rem == 0)
+  {
+    if (_limitReachedPtr)
+      *_limitReachedPtr = true;
+    return E_ABORT;
+  }
+  // Clamp: when _rem < size it fits in UInt32 since _rem < size <= UINT32_MAX
+  const UInt32 toWrite = (_rem >= size) ? size : (UInt32)_rem;
+  UInt32 written = 0;
+  const HRESULT res = _stream->Write(data, toWrite, &written);
+  _rem -= written;
+  if (processedSize)
+    *processedSize = written;
+  if (_rem == 0)
+  {
+    if (_limitReachedPtr)
+      *_limitReachedPtr = true;
+    return E_ABORT;
+  }
+  return res;
+}
+
+
 Z7_COM7F_IMF(CArchiveExtractCallback::GetStream(UInt32 index, ISequentialOutStream **outStream, Int32 askExtractMode))
 {
   COM_TRY_BEGIN
@@ -1839,7 +1873,18 @@ Z7_COM7F_IMF(CArchiveExtractCallback::GetStream(UInt32 index, ISequentialOutStre
   if (askExtractMode == NArchive::NExtract::NAskMode::kExtract && !_testMode)
   {
     if (_stdOutMode)
-      outStreamLoc = new CStdOutFileStream;
+    {
+      CMyComPtr<ISequentialOutStream> stdOut = new CStdOutFileStream;
+      if (_stdOutByteLimit != k_StdOutByteLimit_Unlimited)
+      {
+        CStdOutStreamWithByteLimit *limitSpec = new CStdOutStreamWithByteLimit;
+        CMyComPtr<ISequentialOutStream> limit(limitSpec);
+        limitSpec->Init(stdOut, _stdOutByteLimit, &ByteLimitWasReached);
+        outStreamLoc = limit;
+      }
+      else
+        outStreamLoc = stdOut;
+    }
     else
     {
       bool needExit = true;
@@ -2675,6 +2720,10 @@ Z7_COM7F_IMF(CArchiveExtractCallback::SetOperationResult(Int32 opRes))
   COM_TRY_BEGIN
 
   // printf("\nCArchiveExtractCallback::SetOperationResult: %d %s\n", opRes, GetAnsiString(_diskFilePath));
+
+  // If the byte limit was reached, treat the truncated extraction as success
+  if (ByteLimitWasReached && opRes != NArchive::NExtract::NOperationResult::kOK)
+    opRes = NArchive::NExtract::NOperationResult::kOK;
 
   #ifndef Z7_SFX
   if (ExtractToStreamCallback)

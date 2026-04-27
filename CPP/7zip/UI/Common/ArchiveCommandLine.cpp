@@ -166,6 +166,7 @@ enum Enum
   // kHashGenFile,
   kHashDir,
   kExtractMemLimit,
+  kStdOutByteLimit,
  
   kStdIn,
   kStdOut,
@@ -317,6 +318,7 @@ static const CSwitchForm kSwitchForms[] =
   // { "scrf", SWFRM_STRING_SINGL(1) },
   { "shd", SWFRM_STRING_SINGL(1) },
   { "smemx", SWFRM_STRING },
+  { "slb", SWFRM_STRING },
   
   { "si", SWFRM_STRING },
   { "so", SWFRM_SIMPLE },
@@ -1351,6 +1353,13 @@ void CArcCmdLineParser::Parse2(CArcCmdLineOptions &options)
     const UString &s = parser[NKey::kExtractMemLimit].PostStrings[0];
     if (!ParseSizeString(s, options.ExtractOptions.NtOptions.MemLimit))
       throw CArcCmdLineException("Unsupported -smemx:", s);
+  }
+
+  if (parser[NKey::kStdOutByteLimit].ThereIs)
+  {
+    const UString &s = parser[NKey::kStdOutByteLimit].PostStrings[0];
+    if (!ParseSizeString(s, options.StdOutByteLimit))
+      throw CArcCmdLineException("Unsupported -slb:", s);
   }
   
   if (parser[NKey::kElimDup].ThereIs)
