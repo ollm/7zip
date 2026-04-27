@@ -122,6 +122,10 @@ struct CArcCmdLineOptions
 
   UInt64 StdOutByteLimit;
 
+  bool StdOutSeparatorEnabled;
+  UString StdOutSeparatorPrefix;
+  UString StdOutSeparatorSuffix;
+
   CArcCmdLineOptions():
       HelpMode(false),
       // LargePages(false),
@@ -151,7 +155,9 @@ struct CArcCmdLineOptions
 
       LogLevel(0),
 
-      StdOutByteLimit(k_StdOutByteLimit_Unlimited)
+      StdOutByteLimit(k_StdOutByteLimit_Unlimited),
+
+      StdOutSeparatorEnabled(false)
   {
     ListPathSeparatorSlash.Val =
 #ifdef _WIN32

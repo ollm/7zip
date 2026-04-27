@@ -52,6 +52,10 @@ struct CExtractOptions: public CExtractOptionsBase
   
   UInt64 StdOutByteLimit;
 
+  bool StdOutSeparatorEnabled;
+  UString StdOutSeparatorPrefix;
+  UString StdOutSeparatorSuffix;
+
   // bool ShowDialog;
   // bool PasswordEnabled;
   // UString Password;
@@ -70,7 +74,8 @@ struct CExtractOptions: public CExtractOptionsBase
       StdOutMode(false),
       YesToAll(false),
       TestMode(false),
-      StdOutByteLimit(k_StdOutByteLimit_Unlimited)
+      StdOutByteLimit(k_StdOutByteLimit_Unlimited),
+      StdOutSeparatorEnabled(false)
       {}
 };
 

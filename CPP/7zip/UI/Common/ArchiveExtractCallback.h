@@ -515,6 +515,10 @@ public:
   
   FString DirPathPrefix_for_HashFiles;
 
+  bool StdOutSeparatorEnabled;
+  UString StdOutSeparatorPrefix;
+  UString StdOutSeparatorSuffix;
+
   CArchiveExtractCallback();
 
   void InitForMulti(bool multiArchives,
