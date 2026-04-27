@@ -1,0 +1,345 @@
+name: release
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      create_release:
+        type: boolean
+        default: true
+        description: 'Create GitHub release'
+
+env:
+  APPLICATION_NAME: 7zip
+
+jobs:
+  setup:
+    runs-on: ubuntu-24.04
+    outputs:
+      VERSION: ${{ steps.ver.outputs.VERSION }}
+    steps:
+      - id: ver
+        run: echo "VERSION=$(date +'%Y%m%d-%H%M%S')" >> "$GITHUB_OUTPUT"
+
+  # ---------------- Linux x64 ----------------
+  linux-x64:
+    needs: setup
+    runs-on: ubuntu-24.04
+    env:
+      PACKAGENAME: 7zip-${{ needs.setup.outputs.VERSION }}-linux-x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        working-directory: CPP/7zip/Bundles/Alone2
+        run: make -f makefile.gcc COMPL_STATIC=1 -j$(nproc)
+
+      - name: Package
+        run: |
+          mkdir ${{ env.PACKAGENAME }}
+          cp CPP/7zip/Bundles/Alone2/b/g_x64/7zz \
+             CPP/7zip/Bundles/Alone2/b/g_x64/7zzs \
+             ${{ env.PACKAGENAME }}/
+          tar -czf ${{ env.PACKAGENAME }}.tar.gz ${{ env.PACKAGENAME }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGENAME }}
+          path: ${{ env.PACKAGENAME }}.tar.gz
+
+  # ---------------- Linux ia32 (x86) ----------------
+  linux-x86:
+    needs: setup
+    runs-on: ubuntu-24.04
+    env:
+      PACKAGENAME: 7zip-${{ needs.setup.outputs.VERSION }}-linux-x86
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install 32-bit toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib
+
+      - name: Build
+        working-directory: CPP/7zip/Bundles/Alone2
+        run: make -f cmpl_gcc_x86.mak COMPL_STATIC=1 -j$(nproc)
+
+      - name: Package
+        run: |
+          mkdir ${{ env.PACKAGENAME }}
+          cp CPP/7zip/Bundles/Alone2/b/g_x86/7zz \
+             CPP/7zip/Bundles/Alone2/b/g_x86/7zzs \
+             ${{ env.PACKAGENAME }}/
+          tar -czf ${{ env.PACKAGENAME }}.tar.gz ${{ env.PACKAGENAME }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGENAME }}
+          path: ${{ env.PACKAGENAME }}.tar.gz
+
+  # ---------------- Linux arm64 ----------------
+  linux-arm64:
+    needs: setup
+    runs-on: ubuntu-24.04-arm
+    env:
+      PACKAGENAME: 7zip-${{ needs.setup.outputs.VERSION }}-linux-arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        working-directory: CPP/7zip/Bundles/Alone2
+        run: make -f cmpl_gcc_arm64.mak COMPL_STATIC=1 -j$(nproc)
+
+      - name: Package
+        run: |
+          mkdir ${{ env.PACKAGENAME }}
+          cp CPP/7zip/Bundles/Alone2/b/g_arm64/7zz \
+             CPP/7zip/Bundles/Alone2/b/g_arm64/7zzs \
+             ${{ env.PACKAGENAME }}/
+          tar -czf ${{ env.PACKAGENAME }}.tar.gz ${{ env.PACKAGENAME }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGENAME }}
+          path: ${{ env.PACKAGENAME }}.tar.gz
+
+  # ---------------- Linux arm ----------------
+  linux-arm:
+    needs: setup
+    runs-on: ubuntu-24.04
+    env:
+      PACKAGENAME: 7zip-${{ needs.setup.outputs.VERSION }}-linux-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ARM cross-compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+
+      - name: Build
+        working-directory: CPP/7zip/Bundles/Alone2
+        run: |
+          make -f cmpl_gcc_arm.mak \
+            CROSS_COMPILE=arm-linux-gnueabihf- \
+            COMPL_STATIC=1 \
+            -j$(nproc)
+
+      - name: Package
+        run: |
+          mkdir ${{ env.PACKAGENAME }}
+          cp CPP/7zip/Bundles/Alone2/b/g_arm/7zz \
+             CPP/7zip/Bundles/Alone2/b/g_arm/7zzs \
+             ${{ env.PACKAGENAME }}/
+          tar -czf ${{ env.PACKAGENAME }}.tar.gz ${{ env.PACKAGENAME }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGENAME }}
+          path: ${{ env.PACKAGENAME }}.tar.gz
+
+  # ---------------- macOS x64 ----------------
+  macos-x64:
+    needs: setup
+    runs-on: macos-13
+    env:
+      PACKAGENAME: 7zip-${{ needs.setup.outputs.VERSION }}-macos-x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        working-directory: CPP/7zip/Bundles/Alone2
+        run: make -f cmpl_mac_x64.mak -j$(sysctl -n hw.logicalcpu)
+
+      - name: Package
+        run: |
+          mkdir ${{ env.PACKAGENAME }}
+          cp CPP/7zip/Bundles/Alone2/b/m_x64/7zz ${{ env.PACKAGENAME }}/
+          tar -czf ${{ env.PACKAGENAME }}.tar.gz ${{ env.PACKAGENAME }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGENAME }}
+          path: ${{ env.PACKAGENAME }}.tar.gz
+
+  # ---------------- macOS arm64 ----------------
+  macos-arm64:
+    needs: setup
+    runs-on: macos-15
+    env:
+      PACKAGENAME: 7zip-${{ needs.setup.outputs.VERSION }}-macos-arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        working-directory: CPP/7zip/Bundles/Alone2
+        run: make -f cmpl_mac_arm64.mak -j$(sysctl -n hw.logicalcpu)
+
+      - name: Package
+        run: |
+          mkdir ${{ env.PACKAGENAME }}
+          cp CPP/7zip/Bundles/Alone2/b/m_arm64/7zz ${{ env.PACKAGENAME }}/
+          tar -czf ${{ env.PACKAGENAME }}.tar.gz ${{ env.PACKAGENAME }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGENAME }}
+          path: ${{ env.PACKAGENAME }}.tar.gz
+
+  # ---------------- Windows x64 ----------------
+  windows-x64:
+    needs: setup
+    runs-on: windows-latest
+    env:
+      PACKAGENAME: 7zip-${{ needs.setup.outputs.VERSION }}-windows-x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          cd CPP\7zip\Bundles\Format7zF
+          nmake /f makefile PLATFORM=x64
+          cd ..\..\..\..
+          cd CPP\7zip\UI\Console
+          nmake /f makefile PLATFORM=x64
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path "${{ env.PACKAGENAME }}"
+          Copy-Item "CPP\7zip\Bundles\Format7zF\x64\7z.dll" -Destination "${{ env.PACKAGENAME }}"
+          Copy-Item "CPP\7zip\UI\Console\x64\7z.exe" -Destination "${{ env.PACKAGENAME }}"
+          Compress-Archive -Path "${{ env.PACKAGENAME }}" -DestinationPath "${{ env.PACKAGENAME }}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGENAME }}
+          path: ${{ env.PACKAGENAME }}.zip
+
+  # ---------------- Windows ia32 (x86) ----------------
+  windows-x86:
+    needs: setup
+    runs-on: windows-latest
+    env:
+      PACKAGENAME: 7zip-${{ needs.setup.outputs.VERSION }}-windows-x86
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
+          cd CPP\7zip\Bundles\Format7zF
+          nmake /f makefile
+          cd ..\..\..\..
+          cd CPP\7zip\UI\Console
+          nmake /f makefile
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path "${{ env.PACKAGENAME }}"
+          Copy-Item "CPP\7zip\Bundles\Format7zF\o\7z.dll" -Destination "${{ env.PACKAGENAME }}"
+          Copy-Item "CPP\7zip\UI\Console\o\7z.exe" -Destination "${{ env.PACKAGENAME }}"
+          Compress-Archive -Path "${{ env.PACKAGENAME }}" -DestinationPath "${{ env.PACKAGENAME }}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGENAME }}
+          path: ${{ env.PACKAGENAME }}.zip
+
+  # ---------------- Windows arm64 ----------------
+  windows-arm64:
+    needs: setup
+    runs-on: windows-11-arm
+    env:
+      PACKAGENAME: 7zip-${{ needs.setup.outputs.VERSION }}-windows-arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" arm64
+          cd CPP\7zip\Bundles\Format7zF
+          nmake /f makefile PLATFORM=arm64
+          cd ..\..\..\..
+          cd CPP\7zip\UI\Console
+          nmake /f makefile PLATFORM=arm64
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path "${{ env.PACKAGENAME }}"
+          Copy-Item "CPP\7zip\Bundles\Format7zF\arm64\7z.dll" -Destination "${{ env.PACKAGENAME }}"
+          Copy-Item "CPP\7zip\UI\Console\arm64\7z.exe" -Destination "${{ env.PACKAGENAME }}"
+          Compress-Archive -Path "${{ env.PACKAGENAME }}" -DestinationPath "${{ env.PACKAGENAME }}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGENAME }}
+          path: ${{ env.PACKAGENAME }}.zip
+
+  # ---------------- Windows arm ----------------
+  windows-arm:
+    needs: setup
+    runs-on: windows-latest
+    env:
+      PACKAGENAME: 7zip-${{ needs.setup.outputs.VERSION }}-windows-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_arm
+          cd CPP\7zip\Bundles\Format7zF
+          nmake /f makefile PLATFORM=arm
+          cd ..\..\..\..
+          cd CPP\7zip\UI\Console
+          nmake /f makefile PLATFORM=arm
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path "${{ env.PACKAGENAME }}"
+          Copy-Item "CPP\7zip\Bundles\Format7zF\arm\7z.dll" -Destination "${{ env.PACKAGENAME }}"
+          Copy-Item "CPP\7zip\UI\Console\arm\7z.exe" -Destination "${{ env.PACKAGENAME }}"
+          Compress-Archive -Path "${{ env.PACKAGENAME }}" -DestinationPath "${{ env.PACKAGENAME }}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGENAME }}
+          path: ${{ env.PACKAGENAME }}.zip
+
+  # ---------------- GitHub Release ----------------
+  release:
+    if: ${{ inputs.create_release != false }}
+    needs:
+      - setup
+      - linux-x64
+      - linux-x86
+      - linux-arm64
+      - linux-arm
+      - macos-x64
+      - macos-arm64
+      - windows-x64
+      - windows-x86
+      - windows-arm64
+      - windows-arm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.setup.outputs.VERSION }}
+          name: 7zip-${{ needs.setup.outputs.VERSION }}
+          files: artifacts/**/*
