@@ -199,7 +199,7 @@ jobs:
   # ---------------- Windows x64 ----------------
   windows-x64:
     needs: setup
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     permissions:
       contents: read
     env:
@@ -233,7 +233,7 @@ jobs:
   # ---------------- Windows ia32 (x86) ----------------
   windows-x86:
     needs: setup
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     permissions:
       contents: read
     env:
