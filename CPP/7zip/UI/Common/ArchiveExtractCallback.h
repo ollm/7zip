@@ -30,12 +30,14 @@ Z7_CLASS_IMP_NOQIB_1(
   CMyComPtr<ISequentialOutStream> _stream;
   UInt64 _rem;
   bool *_limitReachedPtr;
+  bool _abortWhenLimitReached;
 public:
-  void Init(ISequentialOutStream *stream, UInt64 limit, bool *limitReachedPtr)
+  void Init(ISequentialOutStream *stream, UInt64 limit, bool *limitReachedPtr, bool abortWhenLimitReached)
   {
     _stream = stream;
     _rem = limit;
     _limitReachedPtr = limitReachedPtr;
+    _abortWhenLimitReached = abortWhenLimitReached;
   }
 };
 
@@ -518,6 +520,7 @@ public:
   bool StdOutSeparatorEnabled;
   UString StdOutSeparatorPrefix;
   UString StdOutSeparatorSuffix;
+  bool StdOutByteLimitAbortItem;
 
   CArchiveExtractCallback();
 

@@ -305,7 +305,8 @@ CArchiveExtractCallback::CArchiveExtractCallback():
     ByteLimitWasReached(false),
     _arc(NULL),
     _multiArchives(false),
-    StdOutSeparatorEnabled(false)
+      StdOutSeparatorEnabled(false),
+      StdOutByteLimitAbortItem(false)
 {
   #ifdef Z7_USE_SECURITY_CODE
   _saclEnabled = InitLocalPrivileges();
@@ -1601,7 +1602,9 @@ Z7_COM7F_IMF(CStdOutStreamWithByteLimit::Write(const void *data, UInt32 size, UI
   {
     if (_limitReachedPtr)
       *_limitReachedPtr = true;
-    return E_ABORT;
+    if (!_abortWhenLimitReached && processedSize)
+      *processedSize = size;
+    return _abortWhenLimitReached ? E_ABORT : S_OK;
   }
 
   const UInt32 toWrite = (_rem >= size) ? size : (UInt32)_rem;
@@ -1615,16 +1618,22 @@ Z7_COM7F_IMF(CStdOutStreamWithByteLimit::Write(const void *data, UInt32 size, UI
   }
 
   _rem -= written;
-  if (processedSize)
-    *processedSize = written;
 
   if (_rem == 0)
   {
     if (_limitReachedPtr)
       *_limitReachedPtr = true;
-    // Stop decoding this item as soon as the requested prefix is fully written.
-    return E_ABORT;
+    if (!_abortWhenLimitReached && processedSize)
+      *processedSize = size;
+    else if (processedSize)
+      *processedSize = written;
+    // Stop decoding this item as soon as the requested prefix is fully written
+    // only when per-item early stop mode is enabled.
+    return _abortWhenLimitReached ? E_ABORT : S_OK;
   }
+
+  if (processedSize)
+    *processedSize = written;
 
   return S_OK;
 }
@@ -1905,7 +1914,7 @@ Z7_COM7F_IMF(CArchiveExtractCallback::GetStream(UInt32 index, ISequentialOutStre
       {
         CStdOutStreamWithByteLimit *limitSpec = new CStdOutStreamWithByteLimit;
         CMyComPtr<ISequentialOutStream> limit(limitSpec);
-        limitSpec->Init(stdOut, _stdOutByteLimit, &ByteLimitWasReached);
+        limitSpec->Init(stdOut, _stdOutByteLimit, &ByteLimitWasReached, StdOutByteLimitAbortItem);
         outStreamLoc = limit;
       }
       else

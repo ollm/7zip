@@ -260,6 +260,8 @@ static HRESULT DecompressArchive(
       && options.StdOutByteLimit != k_StdOutByteLimit_Unlimited
       && !IsSolidArchive(archive);
 
+    ecs->StdOutByteLimitAbortItem = tryPerItemByteLimit;
+
     if (tryPerItemByteLimit)
     {
       result = S_OK;
