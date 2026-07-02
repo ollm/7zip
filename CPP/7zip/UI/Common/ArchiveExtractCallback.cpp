@@ -1596,29 +1596,37 @@ Z7_COM7F_IMF(CStdOutStreamWithByteLimit::Write(const void *data, UInt32 size, UI
 {
   if (processedSize)
     *processedSize = 0;
+
   if (_rem == 0)
   {
-    // Limit already reached: act as a null sink so extraction continues for remaining files
     if (_limitReachedPtr)
       *_limitReachedPtr = true;
-    if (processedSize)
-      *processedSize = size;
-    return S_OK;
+    return E_ABORT;
   }
-  // Clamp: when _rem < size it fits in UInt32 since _rem < size <= UINT32_MAX
+
   const UInt32 toWrite = (_rem >= size) ? size : (UInt32)_rem;
   UInt32 written = 0;
   const HRESULT res = _stream->Write(data, toWrite, &written);
+  if (res != S_OK)
+  {
+    if (processedSize)
+      *processedSize = written;
+    return res;
+  }
+
   _rem -= written;
+  if (processedSize)
+    *processedSize = written;
+
   if (_rem == 0)
   {
     if (_limitReachedPtr)
       *_limitReachedPtr = true;
+    // Stop decoding this item as soon as the requested prefix is fully written.
+    return E_ABORT;
   }
-  // Report all bytes as processed (remaining bytes beyond the limit are discarded)
-  if (processedSize)
-    *processedSize = size;
-  return res;
+
+  return S_OK;
 }
 
 

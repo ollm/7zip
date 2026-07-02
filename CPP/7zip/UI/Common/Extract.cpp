@@ -32,6 +32,16 @@ static void SetErrorMessage(const char *message,
   s += fs2us(path);
 }
 
+static bool IsSolidArchive(IInArchive *archive)
+{
+  NCOM::CPropVariant prop;
+  if (archive->GetArchiveProperty(kpidSolid, &prop) != S_OK)
+    return false;
+  if (prop.vt == VT_BOOL)
+    return VARIANT_BOOLToBool(prop.boolVal);
+  return false;
+}
+
 
 static HRESULT DecompressArchive(
     CCodecs *codecs,
@@ -244,7 +254,30 @@ static HRESULT DecompressArchive(
     IArchiveExtractCallback *aec = ecs;
     const UInt64 val = 0;
     RINOK(aec->SetCompleted(&val))
-    result = archive->Extract(realIndices.ConstData(), realIndices.Size(), testMode, aec);
+
+    const bool tryPerItemByteLimit =
+      options.StdOutMode
+      && options.StdOutByteLimit != k_StdOutByteLimit_Unlimited
+      && !IsSolidArchive(archive);
+
+    if (tryPerItemByteLimit)
+    {
+      result = S_OK;
+      FOR_VECTOR (i, realIndices)
+      {
+        const UInt32 realIndex = realIndices[i];
+        HRESULT curRes = archive->Extract(&realIndex, 1, testMode, aec);
+        if (curRes == E_ABORT && ecs->ByteLimitWasReached)
+          curRes = S_OK;
+        if (curRes != S_OK)
+        {
+          result = curRes;
+          break;
+        }
+      }
+    }
+    else
+      result = archive->Extract(realIndices.ConstData(), realIndices.Size(), testMode, aec);
   }
   
   const HRESULT res2 = ecsCloser.Close();
