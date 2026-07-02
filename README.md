@@ -34,8 +34,8 @@ This will produce an output stream like:
 
 1 folder, 137 files, 1389970597 bytes (1326 MiB), (Approx 10 MiB per image)
 
-| Format | Original version | Modified version (First 64 bytes) | Improvement |
-|--|--|--|--|
+| Format | Full extraction | `-slb64` (First 64 bits) | Speedup |
+|--------|----------------:|-------------------------:|---------:|
 | ZIP -r 0 | 2.08s | 9.46ms | 219x |
 | ZIP -r 9 | 5.42s | 60.63ms | 89x |
 | RAR -m0 | 2.30s | 8.04ms | 286x |
