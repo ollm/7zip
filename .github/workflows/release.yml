@@ -25,9 +25,19 @@ jobs:
     permissions: {}
     outputs:
       VERSION: ${{ steps.ver.outputs.VERSION }}
+      SEVENZIP_VERSION: ${{ steps.ver.outputs.SEVENZIP_VERSION }}
     steps:
+      - uses: actions/checkout@v4
+
       - id: ver
-        run: echo "VERSION=$(date +'%Y%m%d-%H%M%S')" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "VERSION=$(date +'%Y%m%d-%H%M%S')" >> "$GITHUB_OUTPUT"
+          SEVENZIP_VERSION=$(sed -n 's/^#define MY_VERSION_NUMBERS "\([^"]*\)".*/\1/p' C/7zVersion.h)
+          if [ -z "$SEVENZIP_VERSION" ]; then
+            echo "Could not determine the 7-Zip version from C/7zVersion.h" >&2
+            exit 1
+          fi
+          echo "SEVENZIP_VERSION=$SEVENZIP_VERSION" >> "$GITHUB_OUTPUT"
 
   # ---------------- Linux x64 ----------------
   linux-x64:
@@ -334,4 +344,5 @@ jobs:
         with:
           tag_name: ${{ needs.setup.outputs.VERSION }}
           name: 7zip-${{ needs.setup.outputs.VERSION }}
+          body: 7-Zip version ${{ needs.setup.outputs.SEVENZIP_VERSION }}
           files: artifacts/**/*
